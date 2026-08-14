@@ -1015,10 +1015,15 @@ void RDLogModel::processNotification(RDNotification *notify)
 
 void RDLogModel::setStartTimeStyle(RDLogModel::StartTimeStyle style)
 {
-  if(d_start_time_style!=style) {
-    d_start_time_style=style;
-    emit dataChanged(createIndex(0,0),createIndex(lineCount(),0));
+  d_start_time_style=style;
+  if(style==RDLogModel::Estimated) {
+    d_headers[0]=tr("Est. Time");
   }
+  else {
+    d_headers[0]=tr("Sch. Time");
+  }
+  emit headerDataChanged(Qt::Horizontal,0,0);
+  emit dataChanged(createIndex(0,0),createIndex(lineCount(),0));
 }
 
 
@@ -1046,7 +1051,11 @@ QString RDLogModel::StartTimeString(int line) const
 	}
       }
       else {   // Scheduled
-	if(ll->startTime(RDLogLine::Logged).isNull()) {
+	if(ll->startTime(RDLogLine::Logged).isNull()||
+	   ((ll->timeType()!=RDLogLine::Hard)&&
+	    ((ll->source()==RDLogLine::Manual)||
+	     (ll->source()==RDLogLine::Tracker))&&
+	    (ll->startTime(RDLogLine::Logged)==QTime(0,0,0)))) {
 	  return QString("");
 	}
 	else {
@@ -1547,7 +1556,12 @@ QStringList RDLogModel::headerTexts() const
 {
   QStringList ret;
 
-  ret.push_back(tr("Est. Time"));  // 00
+  if(d_start_time_style==RDLogModel::Estimated) {
+    ret.push_back(tr("Est. Time"));  // 00
+  }
+  else {
+    ret.push_back(tr("Sch. Time"));  // 00
+  }
   ret.push_back(tr("Trans"));      // 01
   ret.push_back(tr("Cart"));       // 02
   ret.push_back(tr("Group"));      // 03
