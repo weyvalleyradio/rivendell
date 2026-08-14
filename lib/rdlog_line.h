@@ -190,6 +190,7 @@ class RDLogLine
   QString forcedLengthText() const;
   unsigned averageSegueLength() const;
   void setAverageSegueLength(unsigned len);
+  void setAverageSegueOverlap(unsigned len);
   unsigned cutQuantity() const;
   void setCutQuantity(unsigned quan);
   unsigned lastCutPlayed() const;

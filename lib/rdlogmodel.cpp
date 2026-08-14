@@ -526,7 +526,7 @@ void RDLogModel::update(int line)
       d_log_lines[line]->setUserDefined(q->value(9).toString());     // User Defined
       d_log_lines[line]->setUsageCode((RDCart::UsageCode)q->value(16).toInt());
       d_log_lines[line]->setForcedLength(q->value(10).toUInt());   // Forced Length
-      d_log_lines[line]->setAverageSegueLength(q->value(19).toUInt());
+      d_log_lines[line]->setAverageSegueOverlap(q->value(19).toUInt());
       d_log_lines[line]->setCutQuantity(q->value(11).toUInt());       // Cut Quantity
       d_log_lines[line]->setLastCutPlayed(q->value(12).toUInt());  // Last Cut Played
       d_log_lines[line]->
@@ -1221,7 +1221,7 @@ int RDLogModel::LoadLines(const QString &logname,int id_offset,bool track_ptrs)
       line.setUsageCode((RDCart::UsageCode)q->value(46).toInt());
       line.setForcedLength(q->value(21).toUInt());      // Forced Length
       if(q->value(7).toInt()<0) {
-	line.setAverageSegueLength(q->value(47).toInt());
+	line.setAverageSegueOverlap(q->value(47).toUInt());
       }
       else {
 	line.

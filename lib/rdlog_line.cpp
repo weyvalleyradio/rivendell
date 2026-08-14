@@ -1173,6 +1173,17 @@ void RDLogLine::setAverageSegueLength(unsigned len)
 }
 
 
+void RDLogLine::setAverageSegueOverlap(unsigned len)
+{
+  if(len<log_forced_length) {
+    log_average_segue_length=log_forced_length-len;
+  }
+  else {
+    log_average_segue_length=0;
+  }
+}
+
+
 unsigned RDLogLine::cutQuantity() const
 {
   return log_cut_quantity;
@@ -1994,7 +2005,7 @@ RDLogLine::State RDLogLine::setEvent(int mach,RDLogLine::TransType next_type,
       log_talk_length=log_talk_end-log_talk_start;
     }
     if(segueStartPoint(RDLogLine::AutoPointer)<0) {
-      log_average_segue_length=cart->averageSegueLength();
+      setAverageSegueOverlap(cart->averageSegueLength());
     }
     else {
       log_average_segue_length=segueStartPoint(RDLogLine::AutoPointer)-
@@ -2158,7 +2169,7 @@ void RDLogLine::loadCart(int cartnum,int cutnum)
   log_publisher=q->value(21).toString();
   log_composer=q->value(22).toString();
   log_usage_code=(RDCart::UsageCode)q->value(23).toInt();
-  log_average_segue_length=q->value(24).toInt();
+  setAverageSegueOverlap(q->value(24).toUInt());
   log_cart_notes=q->value(25).toString();
   log_group_color=QColor(q->value(26).toString());
   log_play_source=RDLogLine::UnknownSource;
