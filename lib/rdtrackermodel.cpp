@@ -18,6 +18,7 @@
 //   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 //
 
+#include "rdapplication.h"
 #include "rdtrackermodel.h"
 
 RDTrackerModel::RDTrackerModel(QObject *parent)
@@ -69,6 +70,20 @@ void RDTrackerModel::setServiceName(const QString &str)
     d_group_list->setServiceName(str);
     emitAllDataChanged();
   }
+}
+
+
+QString RDTrackerModel::cellText(int col,int line,RDLogLine *ll) const
+{
+  if((col==0)&&(ll!=NULL)&&(ll->timeType()!=RDLogLine::Hard)&&
+     ((ll->source()==RDLogLine::Manual)||
+      (ll->source()==RDLogLine::Tracker))&&
+     (ll->startTime(RDLogLine::Logged).isNull()||
+      (ll->startTime(RDLogLine::Logged)==QTime(0,0,0)))) {
+    return rda->tenthsTimeString(blockStartTime(line));
+  }
+
+  return RDLogModel::cellText(col,line,ll);
 }
 
 

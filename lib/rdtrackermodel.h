@@ -38,6 +38,7 @@ class RDTrackerModel : public RDLogModel
    void setServiceName(const QString &str);
 
  protected:
+  QString cellText(int col,int line,RDLogLine *ll) const;
   QColor rowBackgroundColor(int row,RDLogLine *ll) const;
 
  private:
