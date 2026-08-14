@@ -87,7 +87,7 @@ void VoiceTracker::resizeEvent(QResizeEvent *e)
 
 void VoiceTracker::paintEvent(QPaintEvent *e)
 {
-  QPainter *p=new QPainter(this);
-  p->fillRect(0,0,size().width(),size().height(),
-	      QColor(AIR_WIDGET_BACKGROUND_COLOR));
+  QPainter p(this);
+  p.fillRect(0,0,size().width(),size().height(),
+	     QColor(AIR_WIDGET_BACKGROUND_COLOR));
 }
