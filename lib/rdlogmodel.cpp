@@ -1412,6 +1412,7 @@ int RDLogModel::LoadLines(const QString &logname,int id_offset,bool track_ptrs)
 	}
 	delete q;
       }
+      ll->clearModified();
     }
   }
 
