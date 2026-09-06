@@ -19,6 +19,7 @@
 //
 
 #include <QObject>
+#include <QRandomGenerator>
 
 #include "rdapplication.h"
 #include "rdconf.h"
@@ -1352,7 +1353,8 @@ void RDEventLine::GenerateMusicSchedEvent(__RDEventLine_GeneratorState *state,
     //
     // Pick a random cart from those that are remaining.
     //
-    int schedpos=rand()%schedCL->getNumberOfItems();
+    int schedpos=
+      QRandomGenerator::global()->bounded(schedCL->getNumberOfItems());
     sql=QString("insert into `LOG_LINES` set ")+
       "`LOG_NAME`=\""+RDEscapeString(logname)+"\","+
       QString::asprintf("`LINE_ID`=%d,",state->count)+

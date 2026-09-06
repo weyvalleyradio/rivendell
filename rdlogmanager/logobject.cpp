@@ -91,7 +91,6 @@ void LogObject::userData()
       }
       SendNotification(RDNotification::DeleteAction,log->name());
       log->removeTracks(rda->station(),rda->user(),rda->config());
-      srand(QTime::currentTime().msec());
       if(!svc->generateLog(start_date,
 			   RDDateDecode(svc->nameTemplate(),start_date,
 				   rda->station(),rda->config(),svc->name()),

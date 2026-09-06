@@ -303,7 +303,6 @@ void GenerateLog::createData()
   //
   // Scheduler
   //
-  srand(QTime::currentTime().msec());
   connect(svc,SIGNAL(generationProgress(int)),
 	  gen_progress_dialog,SLOT(setValue(int)));
   if(!svc->generateLog(gen_date_edit->date(),
