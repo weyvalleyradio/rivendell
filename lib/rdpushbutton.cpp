@@ -214,7 +214,7 @@ int RDPushButton::flashPeriod() const
 void RDPushButton::setFlashPeriod(int period)
 {
   flash_period=period;
-  if(flash_timer->isActive()) {
+  if((flash_timer!=NULL)&&flash_timer->isActive()) {
     flash_timer->stop();
     flash_timer->start(flash_period);
   }
@@ -233,7 +233,8 @@ void RDPushButton::setClockSource(ClockSource src)
     return;
   }
   flash_clock_source=src;
-  if((src==RDPushButton::ExternalClock)&&(flash_timer->isActive())) {
+  if((src==RDPushButton::ExternalClock)&&
+     (flash_timer!=NULL)&&flash_timer->isActive()) {
     flash_timer->stop();
   }
   if((src==RDPushButton::InternalClock)&&flashing_enabled) {
@@ -276,16 +277,21 @@ void RDPushButton::tickClock(bool state)
 
 void RDPushButton::flashOn()
 {
-  if((!flash_timer->isActive())&&
-     (flash_clock_source==RDPushButton::InternalClock)) {
-    flash_timer->start(flash_period);
+  if(flash_clock_source==RDPushButton::InternalClock) {
+    if(flash_timer==NULL) {
+      flash_timer=new QTimer(this);
+      connect(flash_timer,SIGNAL(timeout()),this,SLOT(tickClock()));
+    }
+    if(!flash_timer->isActive()) {
+      flash_timer->start(flash_period);
+    }
   }
 }
 
 
 void RDPushButton::flashOff()
 {
-  if(flash_timer->isActive()&&
+  if((flash_timer!=NULL)&&flash_timer->isActive()&&
      (flash_clock_source==RDPushButton::InternalClock)) {
     flash_timer->stop();
   }
@@ -341,8 +347,7 @@ void RDPushButton::ComposeText()
 
 void RDPushButton::Init()
 {
-  flash_timer=new QTimer();
-  connect(flash_timer,SIGNAL(timeout()),this,SLOT(tickClock()));
+  flash_timer=NULL;
   flash_state=true;
   flashing_enabled=false;
   off_palette=palette();
