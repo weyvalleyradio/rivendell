@@ -55,24 +55,23 @@ class RDButtonPanel : public RDWidget
   int number() const;
   QString title() const;
   void setTitle(const QString &str);
-  RDPanelButton *panelButton(int row,int col) const;
+  RDPanelButton *panelButton(int row,int col,bool create=true);
   void setActionMode(RDAirPlayConf::ActionMode mode);
   void setAllowDrags(bool state);
   void setAcceptDrops(bool state);
   void clear();
   QJsonValue json() const;
 
- public slots:
-  void setVisible(bool state);
-
  signals:
   void buttonClicked(int pnum,int col,int row);
 
  private slots:
   void buttonClickedData(int id);
+  void flashData(bool state);
 
  protected:
   void resizeEvent(QResizeEvent *e);
+  void showEvent(QShowEvent *e);
 
  private:
   void UpdateViewport();
@@ -81,6 +80,11 @@ class RDButtonPanel : public RDWidget
   QSignalMapper *panel_button_mapper;
   RDPanelButton *panel_button[PANEL_MAX_BUTTON_ROWS][PANEL_MAX_BUTTON_COLUMNS];
   RDAirPlayConf::PanelType panel_type;
+  bool panel_flash;
+  bool panel_flash_state;
+  bool panel_allow_drags;
+  bool panel_accept_drops;
+  RDAirPlayConf::ActionMode panel_action_mode;
 };
 
 #endif  // RDBUTTON_PANEL_H

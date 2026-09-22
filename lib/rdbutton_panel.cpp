@@ -39,30 +39,17 @@ RDButtonPanel::RDButtonPanel(RDAirPlayConf::PanelType type,int number,
   connect(panel_button_mapper,SIGNAL(mapped(int)),
 	  this,SLOT(buttonClickedData(int)));
 
+  panel_flash=flash_panel;
+  panel_flash_state=false;
+  panel_allow_drags=drag_drop;
+  panel_accept_drops=drag_drop&&!enforce_setup;
+  panel_action_mode=RDAirPlayConf::Normal;
   for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
     for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
-      panel_button[i][j]=new RDPanelButton(i,j,rda->station(),flash_panel,this);
-      int id=(number*PANEL_MAX_BUTTON_COLUMNS*PANEL_MAX_BUTTON_ROWS)+
-	(i*PANEL_MAX_BUTTON_COLUMNS)+j;
-      connect(panel_button[i][j],SIGNAL(clicked()),
-	      panel_button_mapper,SLOT(map()));
-      panel_button_mapper->setMapping(panel_button[i][j],id);
-      if(drag_drop) {
-	panel_button[i][j]->setAllowDrags(true);
-	if(!enforce_setup) {
-	  panel_button[i][j]->setAcceptDrops(true);
-	}
-      }
-      panel_button[i][j]->hide();
-      parent->connect(parent,SIGNAL(buttonFlash(bool)),
-		      panel_button[i][j],SLOT(flashButton(bool)));
-      QObject::connect(panel_button[i][j],
-	 SIGNAL(cartDropped(int,int,unsigned,const QColor &,const QString &)),
-	 parent,
-	 SLOT(acceptCartDrop(int,int,unsigned,const QColor &,const QString &)));
+      panel_button[i][j]=NULL;
     }
   }
-  clear();
+  connect(parent,SIGNAL(buttonFlash(bool)),this,SLOT(flashData(bool)));
 }
 
 
@@ -113,18 +100,49 @@ void RDButtonPanel::setTitle(const QString &str)
 }
 
 
-RDPanelButton *RDButtonPanel::panelButton(int row,int col) const
+RDPanelButton *RDButtonPanel::panelButton(int row,int col,bool create)
 {
+  if((panel_button[row][col]==NULL)&&create) {
+    RDPanelButton *button=new RDPanelButton(row,col,rda->station(),panel_flash,this);
+    panel_button[row][col]=button;
+    int id=(panel_number*PANEL_MAX_BUTTON_COLUMNS*PANEL_MAX_BUTTON_ROWS)+
+      (row*PANEL_MAX_BUTTON_COLUMNS)+col;
+    connect(button,SIGNAL(clicked()),panel_button_mapper,SLOT(map()));
+    panel_button_mapper->setMapping(button,id);
+    button->setAllowDrags(panel_allow_drags);
+    button->setAcceptDrops(panel_accept_drops);
+    button->hide();
+    button->setGeometry((14+PANEL_BUTTON_SIZE_X)*col,
+                        (14+PANEL_BUTTON_SIZE_Y)*row,
+                        PANEL_BUTTON_SIZE_X,PANEL_BUTTON_SIZE_Y);
+    connect(parentWidget(),SIGNAL(buttonFlash(bool)),button,SLOT(flashButton(bool)));
+    connect(button,
+            SIGNAL(cartDropped(int,int,unsigned,const QColor &,const QString &)),
+            parentWidget(),
+            SLOT(acceptCartDrop(int,int,unsigned,const QColor &,const QString &)));
+    button->flashButton(panel_flash_state);
+    if((panel_action_mode==RDAirPlayConf::CopyTo)||
+       (panel_action_mode==RDAirPlayConf::AddTo)) {
+      button->setColor(BUTTON_TO_BACKGROUND_COLOR);
+    }
+    else if(panel_action_mode==RDAirPlayConf::DeleteFrom) {
+      button->setColor(BUTTON_FROM_BACKGROUND_COLOR);
+    }
+  }
   return panel_button[row][col];
 }
 
 
 void RDButtonPanel::setActionMode(RDAirPlayConf::ActionMode mode)
 {
+  panel_action_mode=mode;
   switch(mode) {
       case RDAirPlayConf::CopyFrom:
 	for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
 	  for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
+	    if(panel_button[i][j]==NULL) {
+	      continue;
+	    }
 	    if(panel_button[i][j]->cart()!=0) {
 	      panel_button[i][j]->setColor(BUTTON_FROM_BACKGROUND_COLOR);
 	    }
@@ -135,6 +153,9 @@ void RDButtonPanel::setActionMode(RDAirPlayConf::ActionMode mode)
       case RDAirPlayConf::CopyTo:
 	      for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
 	        for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
+	          if(panel_button[i][j]==NULL) {
+	            continue;
+	          }
 	      if(panel_button[i][j]->playDeck()!=NULL) {
                 if(panel_button[i][j]->playDeck()->state()==RDPlayDeck::Paused) {
 		  panel_button[i][j]->setColor(RDPANEL_PAUSED_BACKGROUND_COLOR);
@@ -153,6 +174,9 @@ void RDButtonPanel::setActionMode(RDAirPlayConf::ActionMode mode)
       case RDAirPlayConf::AddTo:
 	      for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
 		for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
+		  if(panel_button[i][j]==NULL) {
+		    continue;
+		  }
              if(panel_button[i][j]->playDeck()==NULL) {
                panel_button[i][j]->setColor(BUTTON_TO_BACKGROUND_COLOR);
              }
@@ -163,6 +187,9 @@ void RDButtonPanel::setActionMode(RDAirPlayConf::ActionMode mode)
       case RDAirPlayConf::DeleteFrom:
 	      for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
 	     for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
+	       if(panel_button[i][j]==NULL) {
+	         continue;
+	       }
              if(panel_button[i][j]->playDeck()==NULL) {
                panel_button[i][j]->setColor(BUTTON_FROM_BACKGROUND_COLOR);
              }
@@ -173,6 +200,9 @@ void RDButtonPanel::setActionMode(RDAirPlayConf::ActionMode mode)
       default:
 	for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
 	  for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
+	    if(panel_button[i][j]==NULL) {
+	      continue;
+	    }
 	    if(panel_button[i][j]->playDeck()!=NULL) {
 	      if(panel_button[i][j]->playDeck()->state()==RDPlayDeck::Paused) {
 		panel_button[i][j]->setColor(RDPANEL_PAUSED_BACKGROUND_COLOR);
@@ -198,8 +228,12 @@ void RDButtonPanel::setActionMode(RDAirPlayConf::ActionMode mode)
 
 void RDButtonPanel::setAllowDrags(bool state)
 {
+  panel_allow_drags=state;
   for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
     for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
+      if(panel_button[i][j]==NULL) {
+        continue;
+      }
       panel_button[i][j]->setAllowDrags(state);
     }
   }
@@ -208,8 +242,12 @@ void RDButtonPanel::setAllowDrags(bool state)
 
 void RDButtonPanel::setAcceptDrops(bool state)
 {
+  panel_accept_drops=state;
   for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
     for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
+      if(panel_button[i][j]==NULL) {
+        continue;
+      }
       panel_button[i][j]->setAcceptDrops(state);
     }
   }
@@ -220,6 +258,9 @@ void RDButtonPanel::clear()
 {
   for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
     for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
+      if(panel_button[i][j]==NULL) {
+        continue;
+      }
       panel_button[i][j]->clear();
     }
   }
@@ -232,6 +273,9 @@ QJsonValue RDButtonPanel::json() const
 
   for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
     for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
+      if(panel_button[i][j]==NULL) {
+        continue;
+      }
       if(!panel_button[i][j]->isEmpty()) {
 	ja0.insert(ja0.count(),panel_button[i][j]->json());
       }
@@ -256,17 +300,15 @@ QJsonValue RDButtonPanel::json() const
 }
 
 
-void RDButtonPanel::setVisible(bool state)
+void RDButtonPanel::flashData(bool state)
 {
-  RDWidget::setVisible(state);
-  for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
-    for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
-      panel_button[i][j]->setVisible(state);
-    }
-  }
-  if(state) {
-    UpdateViewport();
-  }
+  panel_flash_state=state;
+}
+
+
+void RDButtonPanel::showEvent(QShowEvent *e)
+{
+  UpdateViewport();
 }
 
 
@@ -282,14 +324,6 @@ void RDButtonPanel::buttonClickedData(int id)
 
 void RDButtonPanel::resizeEvent(QResizeEvent *e)
 {
-  for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
-    for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
-      panel_button[i][j]->setGeometry((14+PANEL_BUTTON_SIZE_X)*j,
-				      (14+PANEL_BUTTON_SIZE_Y)*i,
-				      PANEL_BUTTON_SIZE_X,
-				      PANEL_BUTTON_SIZE_Y);
-    }
-  }
   UpdateViewport();
 }
 
@@ -298,8 +332,14 @@ void RDButtonPanel::UpdateViewport()
 {
   for(int i=0;i<PANEL_MAX_BUTTON_ROWS;i++) {
     for(int j=0;j<PANEL_MAX_BUTTON_COLUMNS;j++) {
-      RDPanelButton *button=panel_button[i][j];
-      button->setVisible(geometry().contains(button->geometry()));
+      QRect bounds((14+PANEL_BUTTON_SIZE_X)*j,(14+PANEL_BUTTON_SIZE_Y)*i,
+                   PANEL_BUTTON_SIZE_X,PANEL_BUTTON_SIZE_Y);
+      if(isVisible()&&rect().contains(bounds)) {
+        panelButton(i,j)->show();
+      }
+      else if(panel_button[i][j]!=NULL) {
+        panel_button[i][j]->hide();
+      }
     }
   }
 }

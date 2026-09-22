@@ -370,18 +370,20 @@ void RDSoundPanel::duckVolume(RDAirPlayConf::PanelType type,int panel,int row,
     }
     for(int i=0;i<panel_button_columns;i++) {
 	    for(int j=0;j<panel_button_rows;j++) {
-      RDPlayDeck *deck=
-        panel_arrays.value(username).at(panel)->panelButton(j,i)->playDeck();
+      RDPanelButton *button=
+        panel_arrays.value(username).at(panel)->
+          panelButton(j,i,mport==-1&&(row==j||row==-1)&&(col==i||col==-1));
+      if(button==NULL) {
+        continue;
+      }
+      RDPlayDeck *deck=button->playDeck();
       if((row==j || row==-1) && (col==i || col==-1)) {
 	if(mport==-1) {
-	  panel_arrays.value(username).at(panel)->
-	    panelButton(j,i)->setDuckVolume(level);
+	  button->setDuckVolume(level);
 	}    
         if(deck!=NULL) {
           if(edit_mport==-1 || 
-             edit_mport==
-	     panel_arrays.value(username).at(panel)->
-	     panelButton(j,i)->outputText().toInt()) {
+             edit_mport==button->outputText().toInt()) {
 	    deck->duckVolume(level,fade);
           }
         }
@@ -1016,9 +1018,9 @@ void RDSoundPanel::PlayButton(RDAirPlayConf::PanelType type,int panel,
   
   for(int i=0;i<panel_button_columns;i++) {
     for(int j=0;j<panel_button_rows;j++) {
-      if(panel_arrays.value(username).at(panel)->panelButton(j,i)->cart()>0 && 
-         panel_arrays.value(username).at(panel)->
-	 panelButton(j,i)->state()==false) {
+      RDPanelButton *candidate=
+        panel_arrays.value(username).at(panel)->panelButton(j,i,false);
+      if((candidate!=NULL)&&(candidate->cart()>0)&&!candidate->state()) {
         if(edit_col==-1 || col==i) {
 	  edit_col=i;
 	  if(edit_row==-1) {
@@ -1203,16 +1205,18 @@ void RDSoundPanel::PauseButton(RDAirPlayConf::PanelType type,int panel,
   }
   for(int i=0;i<panel_button_columns;i++) {
     for(int j=0;j<panel_button_rows;j++) {
-      RDPlayDeck *deck=
-        panel_arrays.value(username).at(panel)->panelButton(j,i)->playDeck();
+      RDPanelButton *button=
+        panel_arrays.value(username).at(panel)->panelButton(j,i,false);
+      if(button==NULL) {
+        continue;
+      }
+      RDPlayDeck *deck=button->playDeck();
       if(deck!=NULL && (row==j || row==-1) && (col==i || col==-1)) {
         if(mport==-1 || 
-           mport==panel_arrays.value(username).at(panel)->
-	   panelButton(j,i)->outputText().toInt()) {
+           mport==button->outputText().toInt()) {
           deck->pause();
 	  
-          panel_arrays.value(username).at(panel)->
-	    panelButton(j,i)->setStartTime(QTime());
+          button->setStartTime(QTime());
 	}
       }
     }
@@ -1234,20 +1238,21 @@ void RDSoundPanel::StopButton(RDAirPlayConf::PanelType type,int panel,
     }
     for(int i=0;i<panel_button_columns;i++) {
 	    for(int j=0;j<panel_button_rows;j++) {
-      RDPlayDeck *deck=panel_arrays.value(username).at(panel)->
-	panelButton(j,i)->playDeck();
+      RDPanelButton *button=
+        panel_arrays.value(username).at(panel)->panelButton(j,i,false);
+      if(button==NULL) {
+        continue;
+      }
+      RDPlayDeck *deck=button->playDeck();
       if((row==j || row==-1) && (col==i || col==-1)) {
         if(deck!=NULL) {
           if(edit_mport==-1 || 
-             edit_mport==panel_arrays.value(username).
-	     at(panel)->panelButton(j,i)->outputText().toInt()) {
+             edit_mport==button->outputText().toInt()) {
             if(panel_pause_enabled) {
-              panel_arrays.value(username).at(panel)->
-		panelButton(j,i)->setPauseWhenFinished(pause_when_finished);
+              button->setPauseWhenFinished(pause_when_finished);
               }
             else {
-              panel_arrays.value(username).at(panel)->
-		panelButton(j,i)->setPauseWhenFinished(false);
+              button->setPauseWhenFinished(false);
               }
             switch(deck->state()) {
 	    case RDPlayDeck::Playing:
@@ -1266,11 +1271,9 @@ void RDSoundPanel::StopButton(RDAirPlayConf::PanelType type,int panel,
         }
       else {
         if(!pause_when_finished && panel_pause_enabled) {
-          panel_arrays.value(username).at(panel)->
-	    panelButton(j,i)->setState(false); 
-          panel_arrays.value(username).at(panel)->
-	    panelButton(j,i)->setPauseWhenFinished(false); 
-          panel_arrays.value(username).at(panel)->panelButton(j,i)->reset(); 
+          button->setState(false);
+          button->setPauseWhenFinished(false);
+          button->reset();
           }
         }
       }
