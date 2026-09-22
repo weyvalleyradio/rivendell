@@ -426,6 +426,20 @@ void RDPanelButton::resizeEvent(QResizeEvent *e)
 }
 
 
+void RDPanelButton::showEvent(QShowEvent *e)
+{
+  WriteKeycap(button_keycap_msecs);
+  RDPushButton::showEvent(e);
+}
+
+
+void RDPanelButton::hideEvent(QHideEvent *e)
+{
+  setIcon(QIcon());
+  RDPushButton::hideEvent(e);
+}
+
+
 void RDPanelButton::mousePressEvent(QMouseEvent *e)
 {
   button_move_count=10;
@@ -489,6 +503,10 @@ void RDPanelButton::dropEvent(QDropEvent *e)
 
 void RDPanelButton::WriteKeycap(int msecs)
 {
+  button_keycap_msecs=msecs;
+  if(!isVisible()) {
+    return;
+  }
   QString text=button_text;
   QPixmap *pix=new QPixmap(PANEL_BUTTON_SIZE_X-2,PANEL_BUTTON_SIZE_Y-2);
   QPainter *p=new QPainter(pix);

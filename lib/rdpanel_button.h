@@ -95,6 +95,8 @@ class RDPanelButton : public RDPushButton
   void resizeEvent(QResizeEvent *e);
 
  protected:
+  void showEvent(QShowEvent *e);
+  void hideEvent(QHideEvent *e);
   void mousePressEvent(QMouseEvent *e);
   void mouseMoveEvent(QMouseEvent *e);
   void mouseReleaseEvent(QMouseEvent *e);
@@ -120,6 +122,7 @@ class RDPanelButton : public RDPushButton
   int button_length[2];
   int button_active_length;
   int button_msecs;
+  int button_keycap_msecs;
   RDStation *button_station;
   RDPlayDeck *button_play_deck;
   int button_output;
